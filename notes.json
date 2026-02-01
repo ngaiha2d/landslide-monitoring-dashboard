@@ -1,0 +1,36 @@
+{
+  "info": {
+    "name": "NodeMCU Test Device - Dummy Data",
+    "location": "Mizoram Test Site",
+    "sim_number": "Test Device",
+    "installed_date": "2025-11-13"
+  },
+  "current": {
+    "timestamp": 12345678,
+    "pitch": 5.2,
+    "roll": 2.1,
+    "tof_drift_mm": 12,
+    "rain_1h_mm": 8.5,
+    "temperature": 24.5,
+    "humidity": 78,
+    "soil_moisture": 65,
+    "gps_lat": 23.7271,
+    "gps_lng": 92.7176,
+    "gps_valid": true,
+    "status": "normal"
+  },
+  "alerts": {
+    "active": {
+      "pitch_alert": false,
+      "tof_alert": false,
+      "rain_alert": false,
+      "roll_alert": false
+    }
+  },
+  "thresholds": {
+    "pitch_deg": 30.0,
+    "tof_drift_mm": 30,
+    "rain_1h_mm": 15.0,
+    "roll_deg": 45.0
+  }
+}
