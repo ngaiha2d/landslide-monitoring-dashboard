@@ -5,6 +5,8 @@ import Card from "primevue/card";
 import Button from "primevue/button";
 import Calendar from "primevue/calendar";
 import Message from "primevue/message";
+import DataTable from "primevue/datatable";
+import Column from "primevue/column";
 
 const allHistoryData = ref([]);
 const selectedDate = ref(new Date());
@@ -39,18 +41,20 @@ const fetchDataByDate = async () => {
         ) {
           filteredData.push({
             id: key,
-            raw_timestamp: value.timestamp,
-            timestamp: new Date(value.timestamp).toLocaleString(),
-            pitch: value.pitch.toFixed(2),
-            roll: value.roll.toFixed(2),
-            tof_drift_mm: value.tof_drift_mm,
-            rain_1h_mm: value.rain_1h_mm.toFixed(2),
-            rain_total_mm: value.rain_total_mm.toFixed(2),
-            temperature: value.temperature.toFixed(2),
-            humidity: value.humidity,
-            soil_moisture: value.soil_moisture,
-            gps_lat: value.gps_lat.toFixed(5),
-            gps_lng: value.gps_lng.toFixed(5),
+            raw_timestamp: value.timestamp ?? "N/A",
+            timestamp: value.timestamp
+              ? new Date(value.timestamp).toLocaleString()
+              : "N/A",
+            pitch: value.pitch?.toFixed(2) ?? "N/A",
+            roll: value.roll?.toFixed(2) ?? "N/A",
+            tof_drift_mm: value.tof_drift_mm ?? "N/A",
+            rain_1h_mm: value.rain_1h_mm?.toFixed(2) ?? "N/A",
+            rain_total_mm: value.rain_total_mm?.toFixed(2) ?? "N/A",
+            temperature: value.temperature?.toFixed(2) ?? "N/A",
+            humidity: value.humidity ?? "N/A",
+            soil_moisture: value.soil_moisture ?? "N/A",
+            gps_lat: value.gps_lat?.toFixed(5) ?? "N/A",
+            gps_lng: value.gps_lng?.toFixed(5) ?? "N/A",
             status: value.status,
           });
         }
@@ -191,16 +195,16 @@ const downloadAsJSON = () => {
                 severity="info"
               />
               <Button
+                v-if="allHistoryData.length > 0"
                 label="📄 CSV"
                 @click="downloadAsCSV"
-                :disabled="allHistoryData.length === 0"
                 icon="pi pi-download"
                 severity="success"
               />
               <Button
+                v-if="allHistoryData.length > 0"
                 label="📋 JSON"
                 @click="downloadAsJSON"
-                :disabled="allHistoryData.length === 0"
                 icon="pi pi-download"
                 severity="help"
               />
@@ -231,7 +235,53 @@ const downloadAsJSON = () => {
 
       <!-- Placeholder for future visualization -->
       <div v-if="allHistoryData.length > 0" class="mt-4">
-        <!-- Visualization components can go here -->
+        <DataTable
+          :value="allHistoryData"
+          paginator
+          :rows="10"
+          :rowsPerPageOptions="[10, 20, 50]"
+          tableStyle="min-width: 50rem"
+          class="p-datatable-sm"
+        >
+          <Column field="timestamp" header="Timestamp" sortable></Column>
+          <Column field="pitch" header="Pitch (°)" sortable></Column>
+          <Column field="roll" header="Roll (°)" sortable></Column>
+          <Column
+            field="tof_drift_mm"
+            header="ToF Drift (mm)"
+            sortable
+          ></Column>
+          <Column field="rain_1h_mm" header="Rain 1h (mm)" sortable></Column>
+          <Column
+            field="rain_total_mm"
+            header="Rain Total (mm)"
+            sortable
+          ></Column>
+          <Column
+            field="temperature"
+            header="Temperature (°C)"
+            sortable
+          ></Column>
+          <Column field="humidity" header="Humidity (%)" sortable></Column>
+          <Column
+            field="soil_moisture"
+            header="Soil Moisture (%)"
+            sortable
+          ></Column>
+          <Column field="status" header="Status" sortable>
+            <template #body="slotProps">
+              <span
+                :class="{
+                  'text-green-500': slotProps.data.status === 'NORMAL',
+                  'text-yellow-500': slotProps.data.status === 'WARNING',
+                  'text-red-500': slotProps.data.status === 'CRITICAL',
+                }"
+              >
+                {{ slotProps.data.status }}
+              </span>
+            </template>
+          </Column>
+        </DataTable>
       </div>
     </div>
   </div>
