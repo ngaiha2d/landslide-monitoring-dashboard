@@ -233,7 +233,7 @@ onMounted(() => {
         </Card>
 
         <!-- Distance Drift -->
-        <Card class="sensor-card">
+        <!-- <Card class="sensor-card">
           <template #title>
             <i class="pi pi-arrows-h mr-2"></i>
             Distance Drift (VL53L0X)
@@ -256,7 +256,7 @@ onMounted(() => {
               {{ safeValue(deviceData.current?.tof_baseline_mm, 0) }} mm
             </div>
           </template>
-        </Card>
+        </Card> -->
 
         <!-- Rainfall -->
         <Card class="sensor-card">
@@ -277,14 +277,14 @@ onMounted(() => {
                 getProgressSeverity(deviceData.current?.rain_1h_mm || 0, 15)
               "
             />
-            <div class="mt-3 flex justify-content-between">
-              <div>
-                <div class="text-sm text-secondary">Total</div>
+            <div style="display: flex; justify-content: start; gap: 20px;">
+              <div style="display: flex; justify-content: start; gap: 5px;">
+                <div class="text-sm text-secondary">Total :</div>
                 <div class="font-bold">
                   {{ safeValue(deviceData.current?.rain_total_mm) }} mm
                 </div>
               </div>
-              <div>
+              <div style="display: flex; justify-content: start; gap: 5px;">
                 <div class="text-sm text-secondary">Tips</div>
                 <div class="font-bold">
                   {{ deviceData.current?.rain_tips || 0 }}
@@ -382,10 +382,10 @@ onMounted(() => {
   display: flex;
   justify-content: space-between;
   align-items: center;
-  padding: 1.5rem;
+  padding: 1rem;
   background: var(--surface-card);
   border-radius: 8px;
-  margin-bottom: 1.5rem;
+  margin-bottom: 1rem;
   box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
 }
 
@@ -404,15 +404,15 @@ onMounted(() => {
 }
 
 .chart-card {
-  margin-bottom: 1.5rem;
-  margin-top: 1.5rem;
+  margin-bottom: 1rem;
+  margin-top: 1rem;
 }
 
 .loading-grid,
 .grid {
   display: grid;
   grid-template-columns: repeat(auto-fit, minmax(320px, 1fr));
-  gap: 1.5rem;
+  gap: 1rem;
 }
 
 .sensor-card {
@@ -420,14 +420,14 @@ onMounted(() => {
 }
 
 .sensor-value {
-  font-size: 3rem;
+  font-size: 1.5rem;
   font-weight: 700;
   color: var(--primary-color);
   margin-bottom: 0.5rem;
 }
 
 .sensor-value-sm {
-  font-size: 1.5rem;
+  font-size: 1rem;
   font-weight: 600;
   color: var(--text-color);
 }

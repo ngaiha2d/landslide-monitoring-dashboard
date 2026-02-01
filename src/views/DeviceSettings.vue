@@ -268,11 +268,11 @@ onMounted(() => {
 
             <div class="flex flex-column gap-2 mt-2">
               <label class="font-bold">Recipient Phone Number</label>
-              <div class="p-inputgroup">
-                <span class="p-inputgroup-addon"
+              <div class="p-inputgroup" >
+                <span class="p-inputgroup-addon" 
                   ><i class="pi pi-phone"></i
                 ></span>
-                <InputText v-model="settings.phone" placeholder="+91..." />
+                <InputText v-model="settings.phone" placeholder="+91..." style="margin-right: 10px;"/>
                 <Button
                   icon="pi pi-save"
                   label="Save Config"
@@ -284,7 +284,7 @@ onMounted(() => {
 
             <div class="separator my-2"></div>
 
-            <div class="test-actions flex gap-2">
+            <div class="test-actions flex gap-2 p-3">
               <Button
                 label="Trigger Test Call"
                 icon="pi pi-mobile"
@@ -293,6 +293,7 @@ onMounted(() => {
                 :loading="testCallLoading"
                 outlined
                 class="flex-1"
+                style="margin-right: 10px;"
               />
               <Button
                 label="Trigger Test SMS"
@@ -313,7 +314,6 @@ onMounted(() => {
 
 <style scoped>
 .device-settings-container {
-  max-width: 800px;
   margin: 0 auto;
 }
 
@@ -335,6 +335,18 @@ onMounted(() => {
   background-color: var(--surface-hover);
   border-radius: 6px;
   padding: 1rem;
+}
+.content {
+  display: flex;
+  gap: 1rem;
+}
+
+.sensor-card {
+  flex: 1;
+}
+
+.settings-card {
+  flex: 1;
 }
 
 .separator {

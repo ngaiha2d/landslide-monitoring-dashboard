@@ -213,6 +213,7 @@ const downloadAsJSON = () => {
 
           <Message
             v-if="allHistoryData.length > 0"
+            style="margin-top: 1rem"
             severity="success"
             class="mt-4"
             :closable="false"
@@ -226,6 +227,7 @@ const downloadAsJSON = () => {
             v-else-if="!downloadLoading && allHistoryData.length === 0"
             severity="info"
             class="mt-4"
+            style="margin-top: 1rem"
             :closable="false"
           >
             Select a date and click "Load Data" to view history.
@@ -234,7 +236,7 @@ const downloadAsJSON = () => {
       </Card>
 
       <!-- Placeholder for future visualization -->
-      <div v-if="allHistoryData.length > 0" class="mt-4">
+      <div v-if="allHistoryData.length > 0" style="margin-top: 1rem; border: solid; border-width: 1px; border-color: rgba(128, 128, 128, 0.151); border-radius: 8px; padding: 4px;">
         <DataTable
           :value="allHistoryData"
           paginator

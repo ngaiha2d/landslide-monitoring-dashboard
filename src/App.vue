@@ -137,7 +137,7 @@ body {
 
 .main-content {
   flex: 1;
-  padding: 2rem;
+  padding: 1rem;
   width: 100%;
   max-width: 1400px;
   margin: 0 auto;
