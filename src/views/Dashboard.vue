@@ -1,7 +1,7 @@
 <script setup>
-import { ref, onMounted, onUnmounted, computed } from "vue";
-import { database, onValue, ref as dbRef } from "@/firebase";
-import mqtt from "mqtt";
+import { onMounted } from "vue";
+import { storeToRefs } from "pinia";
+import { useDeviceStore } from "../stores/deviceStore";
 
 import Card from "primevue/card";
 import Badge from "primevue/badge";
@@ -12,276 +12,24 @@ import DataTable from "primevue/datatable";
 import Column from "primevue/column";
 import Tag from "primevue/tag";
 import Skeleton from "primevue/skeleton";
-import Chip from "primevue/chip"; // Added missing import based on usage
+import Chip from "primevue/chip";
 
 import MultiSensorChart from "../components/MultiSensorChart.vue";
 
-// Default empty state ensuring UI doesn't crash before data arrives
-const defaultDeviceData = {
-  info: {
-    name: "ESP32_LANDSLIDE_01",
-    location: "Monitoring Station 1",
-    sim_number: "N/A",
-  },
-  current: {
-    pitch: 0,
-    roll: 0,
-    tof_drift_mm: 0,
-    rain_1h_mm: 0,
-    temperature: 0,
-    humidity: 0,
-    soil_moisture: 0,
-    gps_lat: 0,
-    gps_lng: 0,
-    status: "normal",
-    gps_valid: false,
-    tof_baseline_mm: 0,
-    rain_total_mm: 0,
-    rain_tips: 0,
-  },
-  alerts: {
-    active: {},
-  },
-};
+const store = useDeviceStore();
+const {
+  deviceData,
+  loading,
+  lastUpdate,
+  historicalData,
+  isMqttConnected,
+  isDeviceLive,
+  statusSeverity,
+  statusLabel,
+  activeAlertsList,
+} = storeToRefs(store);
 
-const deviceData = ref(JSON.parse(JSON.stringify(defaultDeviceData)));
-const loading = ref(true);
-const lastUpdate = ref(null);
-const historicalData = ref([]);
-const mqttClient = ref(null);
-const isMqttConnected = ref(false);
-const isDeviceLive = ref(false);
-
-const MAX_HISTORY = 20;
-let unsubscribeData = null;
-
-const DEVICE_ID = "ESP32_LANDSLIDE_01";
-const MQTT_BROKER = "ws://broker.emqx.io:8083/mqtt";
-// Removing leading slash to match common MQTT patterns and user screenshot evidence
-const MQTT_TOPIC = `landslide/${DEVICE_ID}/telemetry`;
-
-// Update historical data for chart
-const updateHistoricalData = (data) => {
-  const now = new Date();
-  const timeStr = now.toLocaleTimeString("en-US", {
-    hour: "2-digit",
-    minute: "2-digit",
-    second: "2-digit",
-    hour12: false,
-  });
-
-  historicalData.value.push({
-    time: timeStr,
-    pitch: parseFloat(data.current.pitch || 0),
-    roll: parseFloat(data.current.roll || 0),
-    tof_drift_mm: parseInt(data.current.tof_drift_mm || 0),
-    rain_1h_mm: parseFloat(data.current.rain_1h_mm || 0),
-    temperature: parseFloat(data.current.temperature || 0),
-    humidity: parseInt(data.current.humidity || 0),
-    soil_moisture: parseInt(data.current.soil_moisture || 0),
-  });
-
-  if (historicalData.value.length > MAX_HISTORY) {
-    historicalData.value.shift();
-  }
-};
-
-// Update status and alerts
-const updateStatusAndAlerts = (data) => {
-  const pitch = parseFloat(data.current.pitch || 0);
-  const roll = parseFloat(data.current.roll || 0);
-  const tofDrift = parseInt(data.current.tof_drift_mm || 0);
-  const rain = parseFloat(data.current.rain_1h_mm || 0);
-
-  data.alerts.active.pitch_alert = Math.abs(pitch) >= 30;
-  data.alerts.active.tof_alert = tofDrift >= 30;
-  data.alerts.active.rain_alert = rain >= 15;
-  data.alerts.active.roll_alert = Math.abs(roll) >= 45;
-
-  if (data.alerts.active.roll_alert) {
-    data.current.status = "critical";
-  } else if (
-    data.alerts.active.pitch_alert ||
-    data.alerts.active.tof_alert ||
-    data.alerts.active.rain_alert
-  ) {
-    data.current.status = "warning";
-  } else {
-    data.current.status = "normal";
-  }
-
-  return data;
-};
-
-// MQTT Initialization
-const initMQTT = () => {
-  console.log(`Connecting to MQTT Broker: ${MQTT_BROKER}`);
-
-  mqttClient.value = mqtt.connect(MQTT_BROKER);
-
-  // Watchdog for data reception
-  let dataWatchdog = null;
-
-  const resetWatchdog = () => {
-    if (dataWatchdog) clearTimeout(dataWatchdog);
-    isDeviceLive.value = true;
-
-    // Set device status to not live if no data for 5 seconds
-    dataWatchdog = setTimeout(() => {
-      console.warn("⚠️ No data received for 5s");
-      isDeviceLive.value = false;
-    }, 5000);
-  };
-
-  mqttClient.value.on("connect", () => {
-    console.log("✅ MQTT Connected");
-    isMqttConnected.value = true;
-    // Don't start watchdog yet, wait for first message or keep it false until data arrives
-
-    mqttClient.value.subscribe(MQTT_TOPIC, (err) => {
-      if (!err) {
-        console.log(`📡 Subscribed to ${MQTT_TOPIC}`);
-      } else {
-        console.error("Subscription error:", err);
-      }
-    });
-  });
-
-  mqttClient.value.on("message", (topic, message) => {
-    if (topic === MQTT_TOPIC) {
-      // Reset watchdog on every message
-      resetWatchdog();
-
-      try {
-        const payload = JSON.parse(message.toString());
-        console.log("📩 MQTT Message received:", payload);
-
-        // Map payload to deviceData structure
-        // Payload format: { id, ts, pitch, roll, dtof, rain1h, temp, hum, soil, lat, lng }
-
-        // Update current values
-        deviceData.value.current.pitch =
-          payload.pitch !== undefined
-            ? payload.pitch
-            : deviceData.value.current.pitch;
-        deviceData.value.current.roll =
-          payload.roll !== undefined
-            ? payload.roll
-            : deviceData.value.current.roll;
-        deviceData.value.current.tof_drift_mm =
-          payload.dtof !== undefined
-            ? payload.dtof
-            : deviceData.value.current.tof_drift_mm;
-        deviceData.value.current.rain_1h_mm =
-          payload.rain1h !== undefined
-            ? payload.rain1h
-            : deviceData.value.current.rain_1h_mm;
-        deviceData.value.current.temperature =
-          payload.temp !== undefined
-            ? payload.temp
-            : deviceData.value.current.temperature;
-        deviceData.value.current.humidity =
-          payload.hum !== undefined
-            ? payload.hum
-            : deviceData.value.current.humidity;
-        deviceData.value.current.soil_moisture =
-          payload.soil !== undefined
-            ? payload.soil
-            : deviceData.value.current.soil_moisture;
-
-        // GPS
-        if (payload.lat !== undefined && payload.lng !== undefined) {
-          deviceData.value.current.gps_lat = payload.lat;
-          deviceData.value.current.gps_lng = payload.lng;
-          deviceData.value.current.gps_valid =
-            payload.lat !== 0 || payload.lng !== 0;
-        }
-
-        // Run logic
-        updateStatusAndAlerts(deviceData.value);
-        updateHistoricalData(deviceData.value);
-
-        lastUpdate.value = Date.now();
-        loading.value = false;
-      } catch (e) {
-        console.error("Error parsing MQTT message:", e);
-      }
-    }
-  });
-
-  mqttClient.value.on("error", (err) => {
-    console.error("MQTT Error:", err);
-    isMqttConnected.value = false;
-  });
-
-  mqttClient.value.on("offline", () => {
-    console.log("MQTT Offline");
-    isMqttConnected.value = false;
-  });
-};
-
-// Computed properties
-const statusSeverity = computed(() => {
-  if (!deviceData.value?.current?.status) return "secondary";
-  const status = deviceData.value.current.status;
-  return status === "critical"
-    ? "danger"
-    : status === "warning"
-      ? "warn"
-      : "success";
-});
-
-const statusLabel = computed(() => {
-  return deviceData.value?.current?.status?.toUpperCase() || "OFFLINE";
-});
-
-const activeAlertsList = computed(() => {
-  if (!deviceData.value?.alerts?.active) return [];
-
-  const alerts = [];
-  const active = deviceData.value.alerts.active;
-
-  if (active.pitch_alert) {
-    alerts.push({
-      type: "Pitch Angle",
-      severity: "danger",
-      icon: "pi-angle-double-up",
-      message: "Pitch angle exceeded threshold",
-      value: `${safeValue(deviceData.value.current?.pitch)}°`,
-    });
-  }
-  if (active.tof_alert) {
-    alerts.push({
-      type: "Distance Drift",
-      severity: "danger",
-      icon: "pi-arrows-h",
-      message: "Distance drift exceeded threshold",
-      value: `${safeValue(deviceData.value.current?.tof_drift_mm, 0)} mm`,
-    });
-  }
-  if (active.rain_alert) {
-    alerts.push({
-      type: "Rainfall",
-      severity: "danger",
-      icon: "pi-cloud",
-      message: "Rainfall exceeded threshold",
-      value: `${safeValue(deviceData.value.current?.rain_1h_mm)} mm/h`,
-    });
-  }
-  if (active.roll_alert) {
-    alerts.push({
-      type: "Roll Angle",
-      severity: "danger",
-      icon: "pi-exclamation-triangle",
-      message: "CRITICAL: Roll angle ≥45° - Emergency call initiated",
-      value: `${safeValue(deviceData.value.current?.roll)}°`,
-    });
-  }
-
-  return alerts;
-});
-
-// Helper functions
+// Helper functions (UI formatting only)
 const formatTime = (timestamp) => {
   if (!timestamp) return "Waiting for data...";
 
@@ -308,35 +56,13 @@ const getProgressSeverity = (value, threshold) => {
 };
 
 onMounted(() => {
-  // Initialize MQTT
-  initMQTT();
+  store.initMQTT();
 
-  // Keep Firebase as backup or secondary source if needed,
-  // but for now relying on MQTT as requested by user.
-  // Uncomment below to keep Firebase active alongside MQTT
-  /*
-  const deviceRef = dbRef(database, "devices/device_001");
-  unsubscribeData = onValue(
-    deviceRef,
-    (snapshot) => {
-      if (snapshot.exists()) {
-        const firebaseData = snapshot.val();
-        // Merge logic would be needed here to avoid conflicts
-      }
-    }
-  );
-  */
-
-  // Fake loading finish to show UI even if no data yet
-  setTimeout(() => {
-    loading.value = false;
-  }, 1000);
-});
-
-onUnmounted(() => {
-  if (unsubscribeData) unsubscribeData();
-  if (mqttClient.value) {
-    mqttClient.value.end();
+  // Handled by store, but if we need to force loading off initially:
+  if (loading.value && !isMqttConnected.value) {
+    setTimeout(() => {
+      loading.value = false;
+    }, 1000);
   }
 });
 </script>
