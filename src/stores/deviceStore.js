@@ -294,6 +294,26 @@ export const useDeviceStore = defineStore("device", () => {
     }
   };
 
+  const sendDeviceCommand = (topicSuffix, payload, options = {}) => {
+    if (!mqttClient.value || !isMqttConnected.value) {
+      console.warn("MQTT not connected, cannot publish");
+      return false;
+    }
+
+    const topic = `landslide/${DEVICE_ID}/${topicSuffix}`;
+    const message =
+      typeof payload === "string" ? payload : JSON.stringify(payload);
+
+    mqttClient.value.publish(topic, message, options, (err) => {
+      if (err) {
+        console.error("Publish error:", err);
+      } else {
+        console.log(`📤 Command sent to ${topic}:`, payload);
+      }
+    });
+    return true;
+  };
+
   return {
     deviceData,
     loading,
@@ -306,5 +326,6 @@ export const useDeviceStore = defineStore("device", () => {
     activeAlertsList,
     initMQTT,
     disconnectMQTT,
+    sendDeviceCommand,
   };
 });

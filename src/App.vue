@@ -1,9 +1,15 @@
 <script setup>
-import { ref, computed } from "vue";
+import { ref, computed, onMounted } from "vue";
+import { useDeviceStore } from "./stores/deviceStore";
 import Button from "primevue/button";
 import Sidebar from "./components/Sidebar.vue";
 
 const isDarkMode = ref(false);
+const store = useDeviceStore();
+
+onMounted(() => {
+  store.initMQTT();
+});
 const isSidebarCollapsed = ref(false);
 const isMobileMenuOpen = ref(false);
 
