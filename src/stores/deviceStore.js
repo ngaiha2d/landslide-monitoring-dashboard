@@ -130,6 +130,7 @@ export const useDeviceStore = defineStore("device", () => {
       roll: parseFloat(data.current.roll || 0),
       tof_drift_mm: parseInt(data.current.tof_drift_mm || 0),
       rain_1h_mm: parseFloat(data.current.rain_1h_mm || 0),
+      rain_total_mm: parseFloat(data.current.rain_total_mm || 0),
       temperature: parseFloat(data.current.temperature || 0),
       humidity: parseInt(data.current.humidity || 0),
       soil_moisture: parseInt(data.current.soil_moisture || 0),
@@ -261,10 +262,27 @@ export const useDeviceStore = defineStore("device", () => {
               database,
               `devices/device_001/history/readings`,
             );
-            push(historyRef, {
-              ...payload,
-              timestamp: Date.now(), // Ensure server-side readable timestamp if needed, or use payload.ts
-            });
+            const historyPayload = {
+              gps_lat: payload.lat !== undefined ? payload.lat : 0,
+              gps_lng: payload.lng !== undefined ? payload.lng : 0,
+              gps_valid:
+                payload.lat !== undefined && payload.lng !== undefined
+                  ? payload.lat !== 0 || payload.lng !== 0
+                  : false,
+              humidity: payload.hum !== undefined ? payload.hum : 0,
+              pitch: payload.pitch !== undefined ? payload.pitch : 0,
+              rain_1h_mm: payload.rain1h !== undefined ? payload.rain1h : 0,
+              rain_total_mm:
+                payload.rain_total_mm !== undefined ? payload.rain_total_mm : 0,
+              roll: payload.roll !== undefined ? payload.roll : 0,
+              soil_moisture: payload.soil !== undefined ? payload.soil : 0,
+              status: deviceData.value.current.status,
+              temperature: payload.temp !== undefined ? payload.temp : 0,
+              timestamp: Date.now(),
+              tof_drift_mm: payload.dtof !== undefined ? payload.dtof : 0,
+            };
+
+            push(historyRef, historyPayload);
             console.log("📝 Data logged to Firebase");
           } catch (fbError) {
             console.error("Firebase push error:", fbError);
