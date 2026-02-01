@@ -1,6 +1,7 @@
 import { defineStore } from "pinia";
 import { ref, computed } from "vue";
 import mqtt from "mqtt";
+import { database, ref as dbRef, push } from "@/firebase";
 
 export const useDeviceStore = defineStore("device", () => {
   // State
@@ -223,6 +224,10 @@ export const useDeviceStore = defineStore("device", () => {
             payload.rain1h !== undefined
               ? payload.rain1h
               : deviceData.value.current.rain_1h_mm;
+          deviceData.value.current.rain_total_mm =
+            payload.rain_total_mm !== undefined
+              ? payload.rain_total_mm
+              : deviceData.value.current.rain_total_mm;
           deviceData.value.current.temperature =
             payload.temp !== undefined
               ? payload.temp
@@ -235,7 +240,7 @@ export const useDeviceStore = defineStore("device", () => {
             payload.soil !== undefined
               ? payload.soil
               : deviceData.value.current.soil_moisture;
-
+          // GPS
           if (payload.lat !== undefined && payload.lng !== undefined) {
             deviceData.value.current.gps_lat = payload.lat;
             deviceData.value.current.gps_lng = payload.lng;
@@ -248,6 +253,22 @@ export const useDeviceStore = defineStore("device", () => {
 
           lastUpdate.value = Date.now();
           loading.value = false;
+
+          // Push to Firebase history
+          try {
+            // Updated path to match schema: devices/{id}/history/readings
+            const historyRef = dbRef(
+              database,
+              `devices/device_001/history/readings`,
+            );
+            push(historyRef, {
+              ...payload,
+              timestamp: Date.now(), // Ensure server-side readable timestamp if needed, or use payload.ts
+            });
+            console.log("📝 Data logged to Firebase");
+          } catch (fbError) {
+            console.error("Firebase push error:", fbError);
+          }
         } catch (e) {
           console.error("Error parsing MQTT message:", e);
         }
