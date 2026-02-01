@@ -20,12 +20,12 @@ const route = useRoute();
 
 const navigation = [
   { name: "Dashboard", href: "/", icon: "pi pi-home" },
-  { name: "Device Settings", href: "/device-settings", icon: "pi pi-cog" },
   {
     name: "Data Downloading",
     href: "/data-downloading",
     icon: "pi pi-download",
   },
+  { name: "Device Settings", href: "/device-settings", icon: "pi pi-cog" },
 ];
 
 const isActive = (path) => route.path === path;
@@ -92,7 +92,7 @@ function closeMobile() {
 .sidebar {
   width: 250px;
   background-color: var(--surface-card);
-  border-right: 1px solid var(--surface-border);
+  border-right: 0.5px solid rgba(138, 138, 138, 0.226);
   display: flex;
   flex-direction: column;
   height: 100vh;

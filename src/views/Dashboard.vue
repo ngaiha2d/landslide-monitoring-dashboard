@@ -173,47 +173,6 @@ onMounted(() => {
 
       <!-- Sensor Cards Grid -->
       <div class="grid">
-        <!-- Device Info -->
-        <Card class="sensor-card">
-          <template #title>
-            <i class="pi pi-info-circle mr-2"></i>
-            Device Information
-          </template>
-          <template #content>
-            <div class="info-list">
-              <div class="info-item">
-                <span class="info-label">Name</span>
-                <span class="info-value">{{
-                  deviceData.info?.name || "N/A"
-                }}</span>
-              </div>
-              <div class="info-item">
-                <span class="info-label">Location</span>
-                <span class="info-value">{{
-                  deviceData.info?.location || "N/A"
-                }}</span>
-              </div>
-              <div class="info-item">
-                <span class="info-label">SIM Number</span>
-                <span class="info-value">{{
-                  deviceData.info?.sim_number || "N/A"
-                }}</span>
-              </div>
-              <div class="info-item" v-if="deviceData.current?.gps_valid">
-                <span class="info-label">GPS</span>
-                <span class="info-value">
-                  {{ safeValue(deviceData.current.gps_lat, 5) }},
-                  {{ safeValue(deviceData.current.gps_lng, 5) }}
-                </span>
-              </div>
-              <div class="info-item" v-else>
-                <span class="info-label">GPS</span>
-                <Tag severity="warn" value="No Fix" icon="pi pi-map-marker" />
-              </div>
-            </div>
-          </template>
-        </Card>
-
         <!-- Tilt Sensor - Pitch -->
         <Card class="sensor-card">
           <template #title>
@@ -483,31 +442,6 @@ onMounted(() => {
   color: var(--text-color-secondary);
   font-size: 0.875rem;
   margin-bottom: 1rem;
-}
-
-.info-list {
-  display: flex;
-  flex-direction: column;
-  gap: 1rem;
-}
-
-.info-item {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  padding: 0.75rem;
-  background: var(--surface-ground);
-  border-radius: 6px;
-}
-
-.info-label {
-  font-weight: 600;
-  color: var(--text-color-secondary);
-}
-
-.info-value {
-  color: var(--text-color);
-  font-weight: 500;
 }
 
 .env-grid {

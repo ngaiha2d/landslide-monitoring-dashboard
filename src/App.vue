@@ -118,7 +118,7 @@ body {
   height: 64px;
   padding: 0 2rem;
   background-color: var(--surface-card);
-  border-bottom: 0.5px solid rgba(128, 128, 128, 0.233);
+  border-bottom: 0.5px solid rgba(128, 128, 128, 0.151);
   display: flex;
   align-items: center;
   justify-content: space-between;
